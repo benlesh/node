@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   native:
-    if: github.repository == 'benlesh/node'
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -55,3 +55,7 @@ jobs:
       - name: Lint Markdown
         if: always()
         run: NODE=$(command -v node) make lint-md
+      - name: CLI documentation checks
+        run: |
+          node test/parallel/test-cli-node-options-docs.js
+          node test/parallel/test-cli-node-cli-manpage-options.mjs

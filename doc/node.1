@@ -882,6 +882,11 @@ This feature requires \fB--allow-worker\fR if used with the Permission Model.
 .It Fl -experimental-network-inspection
 Enable experimental support for the network inspection with Chrome DevTools.
 .
+.It Fl -experimental-observable
+Enable the proposed \fBObservable\fR, \fBSharedObservable\fR, and \fBSubscriber\fR
+globals and \fBEventTarget.prototype.when()\fR. These APIs implement the
+Observable sharing proposal and are subject to change.
+.
 .It Fl -experimental-package-map Ns = Ns Ar <path>
 Enable experimental package map resolution. The \fBpath\fR argument specifies the
 location of a JSON configuration file that defines package resolution mappings.
@@ -2280,6 +2285,8 @@ one is included in the list below.
 \fB--experimental-loader\fR
 .It
 \fB--experimental-modules\fR
+.It
+\fB--experimental-observable\fR
 .It
 \fB--experimental-package-map\fR
 .It
