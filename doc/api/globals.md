@@ -1274,6 +1274,12 @@ object containing `producer`, optional `sharedSources`, and these settings:
 | `closeOnLastUnsubscribe` | `false` | Permanently complete when the last observation cancels. |
 | `keepAliveOnLastUnsubscribe` | `false` | Continue running when the last observation cancels. |
 
+`maxReplayValues` uses numeric conversion: for example, `'3'` becomes `3`,
+`true` becomes `1`, and `null` or `[]` becomes `0`. Invalid numeric results
+throw a `RangeError`; conversion exceptions propagate, including the `TypeError`
+for BigInt and Symbol values. Omitted or `undefined` settings use the default,
+or inherit the receiver's setting when calling `share()` on a shared instance.
+
 The two last-unsubscribe settings cannot both be true. By default, losing the
 last observation cancels the producer and clears replay. Completion and error
 also reset by default. Reset permits a later subscription to start a new
@@ -1300,7 +1306,9 @@ Shared instances inherit the Observable instance methods. There is no
 This prototype arrangement is a draft implementation choice.
 
 `activeSubscribers` reports the current observation count, including internal
-operator subscriptions. `replayValues` returns a frozen, shallow snapshot of
+operator subscriptions and late subscriptions while they replay a closed
+instance's values. An observation is removed before its terminal callback runs.
+`replayValues` returns a frozen, shallow snapshot of
 retained values, oldest first. `maxReplayValues` reports the configured capacity.
 These inspection properties do not start production and are not synchronization
 primitives.
@@ -1740,11 +1748,9 @@ A browser-compatible implementation of [`WritableStreamDefaultWriter`][].
 [browser `LockManager`]: https://developer.mozilla.org/en-US/docs/Web/API/LockManager
 [buffer section]: buffer.md
 [built-in objects]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects
+[observable-sharing-proposal]: https://github.com/WICG/observable/issues/221
 [package condition]: packages.md#conditional-exports
 [timers]: timers.md
 [type stripping]: typescript.md#type-stripping
 [webassembly-mdn]: https://developer.mozilla.org/en-US/docs/WebAssembly
 [webassembly-org]: https://webassembly.org
-
-
-[observable-sharing-proposal]: https://github.com/WICG/observable/issues/221

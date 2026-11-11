@@ -1,0 +1,57 @@
+name: Observable fork validation
+
+on:
+  push:
+    branches: [observable-sharing-221-validation]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observable-fork-validation
+  cancel-in-progress: true
+
+jobs:
+  native:
+    if: github.repository == 'benlesh/node'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    env:
+      CC: clang-19
+      CXX: clang++-19
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: '3.13'
+      - name: Install compiler
+        run: sudo apt-get update && sudo apt-get install -y clang-19
+      - name: Configure
+        run: ./configure
+      - name: Build
+        run: make -j4
+      - name: Observable and platform regression tests
+        run: tools/test.py test/parallel/test-observable-* test/parallel/test-abortcontroller* test/parallel/test-eventtarget* test/parallel/test-cli-node-options* test/parallel/test-cli-options*
+  lint:
+    if: github.repository == 'benlesh/node'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+        with:
+          python-version: '3.13'
+      - name: Install YAML linter
+        run: make lint-yaml-build
+      - name: Lint
+        run: NODE=$(command -v node) make lint
+      - name: Lint Markdown
+        if: always()
+        run: NODE=$(command -v node) make lint-md
