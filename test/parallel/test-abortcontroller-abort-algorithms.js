@@ -30,7 +30,8 @@ for (const [index, signal] of [source, dependent, transitive].entries()) {
   signal.addEventListener('abort', common.mustCall(() => log.push(['event', index])));
 }
 
-assert.doesNotThrow(() => controller.abort('reason'));
+// Throwing algorithms must not escape abort() or interrupt its remaining steps.
+controller.abort('reason');
 assert.deepStrictEqual(log, [
   ['throw', 0], ['algorithm', 0], ['event', 0],
   ['throw', 1], ['algorithm', 1], ['event', 1],

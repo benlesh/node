@@ -1266,13 +1266,13 @@ added: REPLACEME
 Available with `--experimental-observable`. Accepts a producer callback or an
 object containing `producer`, optional `sharedSources`, and these settings:
 
-| Setting | Default | Behavior |
-| --- | --- | --- |
-| `maxReplayValues` | `0` | Maximum retained value count; a finite, nonnegative safe integer. |
-| `closeOnComplete` | `false` | Permanently retain replay and completion. |
-| `closeOnError` | `false` | Permanently retain replay and error. |
-| `closeOnLastUnsubscribe` | `false` | Permanently complete when the last observation cancels. |
-| `keepAliveOnLastUnsubscribe` | `false` | Continue running when the last observation cancels. |
+| Setting                      | Default | Behavior                                                          |
+| ---------------------------- | ------- | ----------------------------------------------------------------- |
+| `maxReplayValues`            | `0`     | Maximum retained value count; a finite, nonnegative safe integer. |
+| `closeOnComplete`            | `false` | Permanently retain replay and completion.                         |
+| `closeOnError`               | `false` | Permanently retain replay and error.                              |
+| `closeOnLastUnsubscribe`     | `false` | Permanently complete when the last observation cancels.           |
+| `keepAliveOnLastUnsubscribe` | `false` | Continue running when the last observation cancels.               |
 
 `maxReplayValues` uses numeric conversion: for example, `'3'` becomes `3`,
 `true` becomes `1`, and `null` or `[]` becomes `0`. Invalid numeric results

@@ -1,6 +1,6 @@
 // Flags: --experimental-observable
 'use strict';
-require('../common');
+const common = require('../common');
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const when = EventTarget.prototype.when;
@@ -414,10 +414,10 @@ test('inspect hooks and finally distinguish terminal outcomes from consumer abor
     await collect(
       Observable.from([1])
         .inspect({
-          subscribe() {
+          subscribe: common.mustCall(function() {
             assert.strictEqual(this, undefined);
             log.push('subscribe');
-          },
+          }),
           next: (value) => log.push(value),
           complete: () => log.push('complete'),
           abort: () => log.push('abort'),
@@ -497,12 +497,12 @@ test('inspect hook failures preserve arguments and cleanup order without calling
       s.addTeardown(() => log.push('cleanup'));
     })
       .inspect({
-        [kind](...received) {
+        [kind]: common.mustCall(function(...received) {
           assert.strictEqual(this, undefined);
           assert.deepStrictEqual(received, args);
           log.push('hook');
           throw failure;
-        },
+        }),
         abort() {
           log.push('abort');
         },

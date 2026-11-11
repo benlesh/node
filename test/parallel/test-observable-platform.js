@@ -1,6 +1,6 @@
 // Flags: --experimental-observable
 'use strict';
-require('../common');
+const common = require('../common');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const vm = require('node:vm');
@@ -44,11 +44,11 @@ test('abort algorithms run before earlier public listeners and resist propagatio
   const controller = new AbortController();
   const log = [];
   let sink;
-  controller.signal.addEventListener('abort', (event) => {
+  controller.signal.addEventListener('abort', common.mustCall((event) => {
     log.push('public');
     assert.strictEqual(sink.active, false);
     event.stopImmediatePropagation();
-  });
+  }));
   new Observable((s) => {
     sink = s;
     s.addTeardown(() => log.push('cleanup'));

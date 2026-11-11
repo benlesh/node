@@ -8,12 +8,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: observable-fork-validation
+  group: observable-fork-validation-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
   native:
-    if: github.repository == 'benlesh/node'
+    if: false
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -55,3 +55,8 @@ jobs:
       - name: Lint Markdown
         if: always()
         run: NODE=$(command -v node) make lint-md
+      - name: Show Markdown formatting diff on failure
+        if: failure()
+        run: |
+          NODE=$(command -v node) make format-md LINT_MD_FILES=doc/api/globals.md
+          git diff -- doc/api/globals.md

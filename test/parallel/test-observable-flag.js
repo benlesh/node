@@ -12,7 +12,8 @@ const script = `
   ]));
 `;
 for (const [args, enabled] of [
-  [[], false],
+  [[], process.config.variables.node_enable_experimentals],
+  [['--no-experimental-observable'], false],
   [['--experimental-observable'], true],
   [['--experimental-observable', '--no-experimental-observable'], false],
   [['--no-experimental-observable', '--experimental-observable'], true],
