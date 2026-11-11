@@ -3,6 +3,8 @@ name: Observable fork validation
 on:
   push:
     branches: [observable-sharing-221-validation]
+    paths-ignore:
+      - .github/workflows/observable-validation.yml
 
 permissions:
   contents: read
@@ -13,7 +15,7 @@ concurrency:
 
 jobs:
   native:
-    if: false
+    if: github.repository == 'benlesh/node'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
