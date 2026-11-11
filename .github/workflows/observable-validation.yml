@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   native:
-    if: false
+    if: github.repository == 'benlesh/node'
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     env:
@@ -33,7 +33,7 @@ jobs:
       - name: Build
         run: make -j4
       - name: Observable and platform regression tests
-        run: tools/test.py test/parallel/test-observable-* test/parallel/test-abortcontroller* test/parallel/test-eventtarget* test/parallel/test-cli-node-options* test/parallel/test-cli-options*
+        run: tools/test.py test/parallel/test-observable-* test/parallel/test-abortcontroller* test/parallel/test-abortsignal* test/parallel/test-eventtarget* test/parallel/test-cli-node-options* test/parallel/test-cli-options*
   lint:
     if: github.repository == 'benlesh/node'
     runs-on: ubuntu-24.04
@@ -55,8 +55,3 @@ jobs:
       - name: Lint Markdown
         if: always()
         run: NODE=$(command -v node) make lint-md
-      - name: Show Markdown formatting diff on failure
-        if: failure()
-        run: |
-          NODE=$(command -v node) make format-md LINT_MD_FILES=doc/api/globals.md
-          git diff -- doc/api/globals.md
