@@ -1,20 +1,54 @@
 // Flags: --experimental-observable
 'use strict';
-require('../common');
+const common = require('../common');
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const vm = require('node:vm');
 const { getEventListeners } = require('node:events');
 
+test('Observable.from rejects primitive inputs with an input-specific diagnostic', () => {
+  for (const value of [5, 'abc', null, undefined, true, 1n, Symbol('input')]) {
+    assert.throws(() => Observable.from(value), {
+      name: 'TypeError',
+      code: 'ERR_INVALID_ARG_TYPE',
+      message: 'Observable.from() requires an object',
+    });
+  }
+});
+
+test('conversion errors retain their intended diagnostics', () => {
+  assert.throws(() => new Observable(5), {
+    code: 'ERR_INVALID_ARG_TYPE',
+    message: 'Expected a configuration object',
+  });
+  assert.throws(() => new Observable({ producer: 5 }), {
+    code: 'ERR_INVALID_ARG_TYPE',
+    message: 'Expected a callback',
+  });
+  assert.throws(() => new Observable(() => {}).share({
+    closeOnLastUnsubscribe: true,
+    keepAliveOnLastUnsubscribe: true,
+  }), {
+    code: 'ERR_INVALID_ARG_TYPE',
+    message: 'Last-unsubscribe closure and keep-alive are mutually exclusive',
+  });
+  let error;
+  Observable.from({ [Symbol.iterator]: () => ({ next: () => 5 }) }).subscribe({
+    error: (reason) => { error = reason; },
+  });
+  assert.strictEqual(error?.code, 'ERR_INVALID_ARG_TYPE');
+  assert.strictEqual(error.message, 'Iterator result must be an object');
+});
+
 test('abort algorithms run before earlier public listeners and resist propagation suppression', () => {
   const controller = new AbortController();
   const log = [];
   let sink;
-  controller.signal.addEventListener('abort', (event) => {
+  controller.signal.addEventListener('abort', common.mustCall((event) => {
     log.push('public');
     assert.strictEqual(sink.active, false);
     event.stopImmediatePropagation();
-  });
+  }));
   new Observable((s) => {
     sink = s;
     s.addTeardown(() => log.push('cleanup'));

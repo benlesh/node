@@ -2741,9 +2741,7 @@ to the `EventTarget`.
 [async context]: async_context.md
 [capturerejections]: #capture-rejections-of-promises
 [error]: #error-events
+[observable-global]: globals.md#class-observable
 [rejection]: #emittersymbolfornodejsrejectionerr-eventname-args
 [rejectionsymbol]: #eventscapturerejectionsymbol
 [stream]: stream.md
-
-
-[observable-global]: globals.md#class-observable

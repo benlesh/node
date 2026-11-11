@@ -17,6 +17,74 @@ function record(source, signal) {
   return log;
 }
 
+test('replay capacity uses ToNumber and propagates conversion exceptions', () => {
+  for (const [input, expected] of [['3', 3], [true, 1], [false, 0], [null, 0], [[], 0], [-0, 0]]) {
+    const shared = new SharedObservable({ producer() {}, maxReplayValues: input });
+    assert.strictEqual(shared.maxReplayValues, expected);
+    assert.strictEqual(shared.share({ maxReplayValues: input }), shared);
+    assert.strictEqual(new Observable(() => {}).share({ maxReplayValues: input }).maxReplayValues, expected);
+  }
+  for (const input of [1n, Symbol('capacity')]) {
+    assert.throws(() => new SharedObservable({ producer() {}, maxReplayValues: input }), TypeError);
+    assert.throws(() => new Observable(() => {}).share({ maxReplayValues: input }), TypeError);
+  }
+  const error = new Error('conversion');
+  const input = { valueOf() { throw error; } };
+  assert.throws(() => new SharedObservable({ producer() {}, maxReplayValues: input }), (e) => e === error);
+});
+
+test('bounded replay wraps repeatedly and snapshots remain independent', () => {
+  let sink;
+  const source = new SharedObservable({ producer: (s) => { sink = s; }, maxReplayValues: 3 });
+  source.subscribe();
+  for (let value = 1; value <= 8; value++) sink.next(value);
+  const snapshot = source.replayValues;
+  assert.ok(Object.isFrozen(snapshot));
+  assert.deepStrictEqual(snapshot, [6, 7, 8]);
+  const late = record(source);
+  assert.deepStrictEqual(late, [6, 7, 8]);
+  sink.next(9);
+  assert.deepStrictEqual(snapshot, [6, 7, 8]);
+  assert.deepStrictEqual(late, [6, 7, 8, 9]);
+  assert.deepStrictEqual(source.replayValues, [7, 8, 9]);
+  sink.complete({ close: true });
+  assert.deepStrictEqual(record(source), [7, 8, 9, 'complete']);
+});
+
+for (const kind of ['complete', 'error', 'cancel']) {
+  test(`wrapped replay resets its head after ${kind}`, () => {
+    let sink;
+    const source = new SharedObservable({ producer: (s) => { sink = s; }, maxReplayValues: 3 });
+    const controller = new AbortController();
+    record(source, controller.signal);
+    for (let value = 0; value < 8; value++) sink.next(value);
+    if (kind === 'cancel') controller.abort();
+    else if (kind === 'error') sink.error('reason');
+    else sink.complete();
+    assert.deepStrictEqual(source.replayValues, []);
+    source.subscribe();
+    sink.next(10);
+    assert.deepStrictEqual(source.replayValues, [10]);
+    sink.next(11);
+    sink.next(12);
+    sink.next(13);
+    assert.deepStrictEqual(record(source), [11, 12, 13]);
+    sink.complete();
+  });
+}
+
+test('large replay capacities do not allocate the full buffer before values arrive', () => {
+  const source = new SharedObservable({
+    maxReplayValues: Number.MAX_SAFE_INTEGER,
+    producer(s) {
+      s.next('value');
+      s.complete({ close: true });
+    },
+  });
+  assert.deepStrictEqual(record(source), ['value', 'complete']);
+  assert.deepStrictEqual(source.replayValues, ['value']);
+});
+
 test('constructors and configuration validate eagerly without starting production', () => {
   for (const Type of [Observable, SharedObservable]) {
     for (const input of [undefined, null, {}, { producer: 1 }, 1])
