@@ -1555,6 +1555,18 @@ added:
 
 Enable experimental support for the network inspection with Chrome DevTools.
 
+### `--experimental-observable`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+> Stability: 1.0 - Early development
+
+Enable the proposed [`Observable`][], `SharedObservable`, and `Subscriber`
+globals and [`EventTarget.prototype.when()`][]. These APIs implement the
+[Observable sharing proposal][] and are subject to change.
+
 ### `--experimental-package-map=<path>`
 
 <!-- YAML
@@ -4322,6 +4334,7 @@ one is included in the list below.
 * `--experimental-json-modules`
 * `--experimental-loader`
 * `--experimental-modules`
+* `--experimental-observable`
 * `--experimental-package-map`
 * `--experimental-print-required-tla`
 * `--experimental-quic`
@@ -4938,6 +4951,7 @@ node --stack-trace-limit=12 -p -e "Error.stackTraceLimit" # prints 12
 [Navigator API]: globals.md#navigator
 [Node.js issue tracker]: https://github.com/nodejs/node/issues
 [OSSL_PROVIDER-legacy]: https://www.openssl.org/docs/man3.0/man7/OSSL_PROVIDER-legacy.html
+[Observable sharing proposal]: https://github.com/WICG/observable/issues/221
 [Package maps]: packages.md#package-maps
 [Permission Model]: permissions.md#permission-model
 [REPL]: repl.md
@@ -4989,10 +5003,12 @@ node --stack-trace-limit=12 -p -e "Error.stackTraceLimit" # prints 12
 [`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`]: errors.md#err_unsupported_node_modules_type_stripping
 [`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`]: errors.md#err_unsupported_typescript_syntax
 [`ERR_WEBASSEMBLY_NOT_SUPPORTED`]: errors.md#err_webassembly_not_supported
+[`EventTarget.prototype.when()`]: events.md#eventtargetwhentype-options
 [`NODE_OPTIONS`]: #node_optionsoptions
 [`NODE_USE_ENV_PROXY=1`]: #node_use_env_proxy1
 [`NODE_V8_COVERAGE=dir`]: #node_v8_coveragedir
 [`NO_COLOR`]: https://no-color.org
+[`Observable`]: globals.md#class-observable
 [`RealFSProvider`]: vfs.md#class-realfsprovider
 [`Web Storage`]: https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API
 [`YoungGenerationSizeFromSemiSpaceSize`]: https://chromium.googlesource.com/v8/v8.git/+/refs/tags/10.3.129/src/heap/heap.cc#328

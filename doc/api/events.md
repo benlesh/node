@@ -2520,6 +2520,37 @@ changes:
 
 Read-only.
 
+#### `eventTarget.when(type[, options])`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+> Stability: 1.0 - Early development
+
+* `type` {string} The event type to observe.
+* `options` {Object}
+  * `capture` {boolean} **Default:** `false`.
+  * `passive` {boolean} **Default:** `false`.
+* Returns: {Object} An ordinary [`Observable`][observable-global].
+
+Available with `--experimental-observable`. Each subscription installs its own
+listener. Cancel with the signal passed to `subscribe()`; cancellation removes
+that listener synchronously. Calling `when()` alone does not install a listener.
+Use `share()` to share one listener between overlapping observations.
+
+```js
+const target = new EventTarget();
+const stop = new AbortController();
+const messages = target.when('message').map((event) => event.detail).share();
+messages.subscribe(console.log, { signal: stop.signal });
+target.dispatchEvent(new CustomEvent('message', { detail: 'hello' }));
+stop.abort();
+```
+
+Event delivery is synchronous. An observer can call `preventDefault()` during
+dispatch when the event is cancelable and the listener is not passive.
+
 ### Class: `NodeEventTarget`
 
 <!-- YAML
@@ -2710,6 +2741,7 @@ to the `EventTarget`.
 [async context]: async_context.md
 [capturerejections]: #capture-rejections-of-promises
 [error]: #error-events
+[observable-global]: globals.md#class-observable
 [rejection]: #emittersymbolfornodejsrejectionerr-eventname-args
 [rejectionsymbol]: #eventscapturerejectionsymbol
 [stream]: stream.md

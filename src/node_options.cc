@@ -777,6 +777,11 @@ EnvironmentOptionsParser::EnvironmentOptionsParser() {
             BOOL_FIELD(experimental_eventsource),
             kAllowedInEnvvar,
             false);
+  AddOption("--experimental-observable",
+            "experimental Observable and SharedObservable APIs",
+            BOOL_FIELD(experimental_observable),
+            kAllowedInEnvvar,
+            false);
   AddOption("--experimental-fetch", "", NoOp{}, kAllowedInEnvvar);
 #if HAVE_FFI
   AddOption("--experimental-ffi",
