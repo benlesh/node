@@ -1470,6 +1470,18 @@ added:
 
 Enable exposition of [EventSource Web API][] on the global scope.
 
+### `--experimental-observable`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+> Stability: 1.0 - Early development
+
+Enable the proposed [`Observable`][], `SharedObservable`, and `Subscriber`
+globals and [`EventTarget.prototype.when()`][]. These APIs implement the
+[Observable sharing proposal][] and are subject to change.
+
 ### `--experimental-import-meta-resolve`
 
 <!-- YAML
@@ -4317,6 +4329,7 @@ one is included in the list below.
 * `--experimental-detect-module`
 * `--experimental-dtls`
 * `--experimental-eventsource`
+* `--experimental-observable`
 * `--experimental-import-meta-resolve`
 * `--experimental-import-text`
 * `--experimental-json-modules`
@@ -5056,3 +5069,8 @@ node --stack-trace-limit=12 -p -e "Error.stackTraceLimit" # prints 12
 [tracking issue for user-land snapshots]: https://github.com/nodejs/node/issues/44014
 [virtual file system]: vfs.md
 [ways that `TZ` is handled in other environments]: https://www.gnu.org/software/libc/manual/html_node/TZ-Variable.html
+
+
+[`Observable`]: globals.md#class-observable
+[`EventTarget.prototype.when()`]: events.md#eventtargetwhentype-options
+[Observable sharing proposal]: https://github.com/WICG/observable/issues/221

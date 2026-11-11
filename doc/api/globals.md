@@ -874,6 +874,109 @@ consisting of the runtime name and major version number.
 console.log(`The user-agent is ${navigator.userAgent}`); // Prints "Node.js/21"
 ```
 
+## Class: `Observable`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+> Stability: 1.0 - Early development
+
+Available with `--experimental-observable`. Implements the draft
+[Observable sharing proposal][observable-sharing-proposal]. Construction and
+composition are lazy. Each call to `subscribe()` starts an independent producer
+execution. Use `SharedObservable` or `share()` to establish a shared execution.
+
+```js
+const values = new Observable((subscriber) => {
+  subscriber.next(1);
+  subscriber.next(2);
+  subscriber.complete();
+});
+
+values.map((value) => value * 2).subscribe(console.log); // 2, 4
+values.subscribe(console.log); // A separate execution: 1, 2
+```
+
+### `new Observable(producer)`
+
+* `producer` {Function|Object} A callback receiving a `Subscriber`, or an object:
+  * `producer` {Function} The producer callback. Required.
+  * `sharedSources` {Object\[]|null} Declared upstream `SharedObservable` instances.
+    Entries are copied and deduplicated. **Default:** `null`.
+
+The callback's return value is ignored. Register cleanup with
+`subscriber.addTeardown(callback)`. A producer exception errors its observation.
+
+### `Observable.from(input)`
+
+* `input` {Object} An Observable, async iterable, iterable, or Promise.
+* Returns: {Object} An Observable.
+
+Existing Observable and SharedObservable instances retain identity. Other inputs
+become ordinary Observables. Iterators are acquired on each subscription;
+cancellation closes an unfinished iterator. A captured Promise is observed again,
+not recreated. Arbitrary thenables are not supported.
+
+### `observable.subscribe([observer[, options]])`
+
+* `observer` {Function|Object} A value callback, or an object with optional `next`,
+  `error`, and `complete` callbacks.
+* `options` {Object}
+  * `signal` {AbortSignal} Cancels this observation.
+* Returns: {undefined}
+
+An already-aborted signal prevents production and replay. Callbacks can run before
+`subscribe()` returns. Observer exceptions and errors without an error callback
+are reported as uncaught exceptions on a subsequent `process.nextTick()`, as with
+Node.js EventTarget listener errors. They do not stop other observers.
+
+### `observable.share([config])`
+
+* `config` {Object} Sharing settings listed under `SharedObservable`.
+* Returns: {Object} A SharedObservable.
+
+Creates a lazy shared boundary. Sharing after an operator shares that operator's
+work; operators added after sharing run separately for each observation.
+On shared input, omitted settings inherit the receiver's settings. Equal settings
+return the same instance; different settings create an independent forwarding
+wrapper. A wrapper cannot reopen a permanently closed source.
+
+### `observable.sharedSources`
+
+* Type: {Object\[]|null}
+
+A frozen snapshot of the nearest declared shared inputs, or `null`. Operators
+propagate known inputs; `takeUntil()` includes its notifier. Dynamic inner
+sources and resources hidden in closures are not discovered. Entries are actual
+observable objects, not identifiers. This API remains an open design question.
+
+### Composition methods
+
+All composition methods are lazy and return ordinary Observables, including when
+called on a SharedObservable:
+
+* `map(mapper)` and `filter(predicate)` call the callback with a value and a
+  zero-based index, with independent indices for each observation.
+* `take(amount)` emits at most `amount` values. It detaches upstream before
+  forwarding the final value. Zero completes without subscribing upstream.
+* `drop(amount)` skips the first `amount` values.
+* `takeUntil(notifier)` observes the notifier first, then the source. A notifier
+  value or error completes the result; notifier completion alone does not.
+* `flatMap(mapper)` converts mapper results with `Observable.from()` and observes
+  them sequentially, buffering outer values while an inner observation runs.
+* `switchMap(mapper)` cancels the previous inner observation before converting
+  and observing the new mapper result.
+* `catch(callback)` converts and observes a replacement after source error and
+  cleanup. It does not catch errors from that replacement.
+* `inspect(inspector)` accepts a value callback, or optional `next`, `error`,
+  `complete`, `subscribe`, and `abort` callbacks. The abort callback receives the
+  cancellation reason and does not run for source completion or error.
+* `finally(callback)` registers cleanup that runs when the observation ends.
+
+Promise-returning consumers and the optional `scan()` and `takeLast()` proposals
+are not included.
+
 ## `performance`
 
 <!-- YAML
@@ -1152,6 +1255,62 @@ added: v0.0.1
 
 [`setTimeout`][] is described in the [timers][] section.
 
+## Class: `SharedObservable`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+> Stability: 1.0 - Early development
+
+Available with `--experimental-observable`. Accepts a producer callback or an
+object containing `producer`, optional `sharedSources`, and these settings:
+
+| Setting | Default | Behavior |
+| --- | --- | --- |
+| `maxReplayValues` | `0` | Maximum retained value count; a finite, nonnegative safe integer. |
+| `closeOnComplete` | `false` | Permanently retain replay and completion. |
+| `closeOnError` | `false` | Permanently retain replay and error. |
+| `closeOnLastUnsubscribe` | `false` | Permanently complete when the last observation cancels. |
+| `keepAliveOnLastUnsubscribe` | `false` | Continue running when the last observation cancels. |
+
+The two last-unsubscribe settings cannot both be true. By default, losing the
+last observation cancels the producer and clears replay. Completion and error
+also reset by default. Reset permits a later subscription to start a new
+execution; it does not retry automatically. Keep-alive does not override producer
+completion or error. A producer can permanently terminate its shared instance
+with `subscriber.complete({ close: true })` or
+`subscriber.error(reason, { close: true })`.
+
+```js
+const result = new SharedObservable({
+  maxReplayValues: 1,
+  closeOnComplete: true,
+  producer(subscriber) {
+    subscriber.next(42);
+    subscriber.complete();
+  },
+});
+result.subscribe(console.log); // 42
+result.subscribe(console.log); // Retained 42; no new producer execution.
+```
+
+Shared instances inherit the Observable instance methods. There is no
+`SharedObservable.from()` static method and no public consumer termination method.
+This prototype arrangement is a draft implementation choice.
+
+`activeSubscribers` reports the current observation count, including internal
+operator subscriptions. `replayValues` returns a frozen, shallow snapshot of
+retained values, oldest first. `maxReplayValues` reports the configured capacity.
+These inspection properties do not start production and are not synchronization
+primitives.
+
+Replay and live delivery are synchronous. A reentrant live notification can
+interleave with replay. Cancellation interrupts replay. Terminal transitions stop
+delivery and commit reset or permanent closure before running cleanup, then notify
+the still-eligible observers. A permanently closed instance replays its retained
+values and outcome without starting again.
+
 ## Class: `Storage`
 
 <!-- YAML
@@ -1161,6 +1320,32 @@ added: v22.4.0
 > Stability: 1.2 - Release candidate. Disable this API with [`--no-experimental-webstorage`][].
 
 A browser-compatible implementation of {Storage}.
+
+## Class: `Subscriber`
+
+<!-- YAML
+added: REPLACEME
+-->
+
+> Stability: 1.0 - Early development
+
+Available with `--experimental-observable`. A Subscriber is supplied to a producer
+and cannot be constructed directly. It exposes:
+
+* `active`: whether the current producer execution is active.
+* `signal`: an AbortSignal aborted when that execution ends.
+* `next(value)`: synchronously deliver a value to eligible observers.
+* `error(reason[, config])`: error the execution; `config.close` requests
+  permanent closure of its shared owner.
+* `complete([config])`: complete the execution; `config.close` requests permanent
+  closure of its shared owner.
+* `addTeardown(callback)`: register cleanup. Cleanup runs in reverse registration
+  order, before terminal callbacks. Late registrations run immediately.
+
+For an ordinary Observable, terminal configuration affects only this execution.
+The close option is not forwarded through observer callbacks. Calls to `next()`
+or `complete()` on an inactive Subscriber do nothing after argument conversion;
+an inactive `error()` reports its reason as an uncaught exception.
 
 ## `structuredClone(value[, options])`
 
@@ -1560,3 +1745,6 @@ A browser-compatible implementation of [`WritableStreamDefaultWriter`][].
 [type stripping]: typescript.md#type-stripping
 [webassembly-mdn]: https://developer.mozilla.org/en-US/docs/WebAssembly
 [webassembly-org]: https://webassembly.org
+
+
+[observable-sharing-proposal]: https://github.com/WICG/observable/issues/221
